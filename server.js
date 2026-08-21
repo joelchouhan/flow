@@ -16,4 +16,6 @@ app.use(express.static('public'));
 app.use('/workflow', workflowRoutes);
 
 const PORT = process.env.PORT || 5000;
+if(require.main === module){
 app.listen(PORT, () => console.log(`Backend Execution Server running on port ${PORT}`));
+}
