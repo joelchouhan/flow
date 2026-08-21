@@ -1,14 +1,14 @@
-const { Ollama } = require('ollama');
+const axios = require('axios');
 const { workflowSchema } = require('../config/constants');
 
-const ollama = new Ollama({ host: 'http://127.0.0.1:11434' });
+
 
 async function detectWorkflowFromPrompt(userPrompt) {
   if (!userPrompt || typeof userPrompt !== 'string') {
     throw new Error('Invalid or missing userPrompt argument.');
   }
 
-  console.log(`[Ollama Processing] Generating workflow for: "${userPrompt.substring(0, 50)}..."`);
+  console.log(`[OpenRouter Processing] Generating workflow for: "${userPrompt.substring(0, 50)}..."`);
 
   const systemPrompt = `You are an expert AI workflow architect for AutomationFlow.
 Your task is to analyze the user's natural language request and parse it into a node-based workflow graph.
@@ -44,20 +44,30 @@ REQUIRED JSON FORMAT:
 }`;
 
   try {
-    const response = await ollama.chat({
-      model: 'qwen2.5-coder',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Generate a workflow graph for the following scenario: "${userPrompt}"` }
-      ],
-      options: {
-        temperature: 0.1
+    const response = await axios.post(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Generate a workflow graph for the following scenario: "${userPrompt}"\n\nEnsure the output is ONLY valid JSON.` }
+        ],
+        temperature: 0.1,
+        response_format: { type: 'json_object' }
       },
-      format: 'json',
-      stream: false
-    });
-
-    const rawContent = response.message.content;
+         {
+        headers: {
+          'Authorization': `Bearer ${process.env.AI_API_KEY}`,
+          'HTTP-Referer': 'https://flow.netlify.app',
+          'X-Title': 'AutomationFlow',
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+        let rawContent = response.data.choices[0].message.content;
+    
+    // Clean up potential markdown formatting from LLM response
+    rawContent = rawContent.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsedWorkflow = JSON.parse(rawContent);
 
     // DYNAMIC SANITIZATION: Force all non-standard node types to valid enum values
@@ -78,7 +88,7 @@ REQUIRED JSON FORMAT:
     return validatedWorkflow;
 
   } catch (error) {
-    console.error('LLM Workflow Detection Error:', error.message);
+    console.error('LLM Workflow Detection Error:', error.response?.data || error.message);
     throw new Error(`Failed to generate workflow from prompt: ${error.message}`);
   }
 }
