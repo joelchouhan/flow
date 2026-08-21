@@ -58,7 +58,7 @@ REQUIRED JSON FORMAT:
          {
         headers: {
           'Authorization': `Bearer ${process.env.AI_API_KEY}`,
-          'HTTP-Referer': 'https://flow.netlify.app',
+          'HTTP-Referer': 'https://logicflow07.netlify.app',
           'X-Title': 'AutomationFlow',
           'Content-Type': 'application/json'
         }
