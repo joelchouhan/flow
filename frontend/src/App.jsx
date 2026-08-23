@@ -1,19 +1,21 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import LoginPage from './pages/LoginPage'
-import FlowchartTab from './pages/FlowchartTab'
-import SwimlaneTab from './pages/SwimlaneTab'
+import { useState } from "react";
+import Navbar from "./pages/Navbar";
+import FlowchartTab from "./pages/FlowchartTab";
+import SwimlaneTab from "./pages/SwimlaneTab";
+import LoginPage from "./pages/LoginPage";
 
-function App() {
+export default function App() {
+  const [activeTab, setActiveTab] = useState("flowchart");
+
+  if (activeTab === "login") {
+    return <LoginPage onBack={() => setActiveTab("flowchart")} />;
+  }
+
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/flowchart" element={<FlowchartTab />} />
-        <Route path="/swimlane" element={<SwimlaneTab />} />
-      </Routes>
-    </BrowserRouter>
-  )
+    <div className="min-h-screen flex flex-col bg-[#F9FAFB]">
+      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      {activeTab === "flowchart" && <FlowchartTab />}
+      {activeTab === "swimlane" && <SwimlaneTab />}
+    </div>
+  );
 }
-
-export default App
